@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5-Minute Hamstring Routine</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --card: #ffffff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: var(--card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        .timer-display {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+        .step-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .step-desc {
+            font-size: 1.1rem;
+            color: #64748b;
+            min-height: 60px;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin: 5px;
+            font-weight: 600;
+        }
+        .controls button:hover {
+            background-color: #1d4ed8;
+        }
+        .controls button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e2e8f0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 1s linear;
+        }
+        .image-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-style: italic;
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Hamstring Mobility Routine</h1>
+        
+        <div class="image-placeholder" id="step-image">
+            Image guidance will appear here
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="step-title" id="step-title">Ready?</div>
+        <div class="step-desc" id="step-desc">Press start when you are in position.</div>
+        
+        <div class="timer-display" id="timer">00:00</div>
+
+        <div class="controls">
+            <button id="start-btn" onclick="startRoutine()">Start</button>
+            <button id="pause-btn" onclick="pauseRoutine()" disabled>Pause</button>
+            <button id="reset-btn" onclick="resetRoutine()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        // Define the routine steps
+        const routine = [
+            { title: "Get Ready", desc: "Stand up, prepare for Elephant Walks.", duration: 5, img: "" },
+            { title: "Elephant Walks", desc: "Hinge at hips. Alternate straightening legs to warm up.", duration: 60, img: "https://images.unsplash.com/photo-1544367567-0f2fcb046e70?auto=format&fit=crop&w=500&q=80" },
+            { title: "Transition", desc: "Get into a kneeling lunge. Left leg straight in front.", duration: 10, img: "" },
+            { title: "Left Leg: The Lift", desc: "Try to lift front foot off floor. Engage hip flexor.", duration: 10, img: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=500&q=80" },
+            { title: "Left Leg: The Drive", desc: "Drive front heel down into the floor. Max effort.", duration: 10, img: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=500&q=80" },
+            { title: "Left Leg: Passive Melt", desc: "Release all tension. Deep breaths. Relax into it.", duration: 40, img: "https://images.unsplash.com/photo-1552286450-32df9eb761bb?auto=format&fit=crop&w=500&q=80" },
+            { title: "Transition", desc: "Switch sides. Right leg straight in front.", duration: 10, img: "" },
+            { title: "Right Leg: The Lift", desc: "Try to lift front foot off floor. Engage hip flexor.", duration: 10, img: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=500&q=80" },
+            { title: "Right Leg: The Drive", desc: "Drive front heel down into the floor. Max effort.", duration: 10, img: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=500&q=80" },
+            { title: "Right Leg: Passive Melt", desc: "Release all tension. Deep breaths. Relax into it.", duration: 40, img: "https://images.unsplash.com/photo-1552286450-32df9eb761bb?auto=format&fit=crop&w=500&q=80" },
+            { title: "Done!", desc: "Great job! Your hamstrings thank you.", duration: 0, img: "" }
+        ];
+
+        let currentStep = 0;
+        let timeLeft = 0;
+        let timerInterval;
+        let isRunning = false;
+
+        const timerDisplay = document.getElementById('timer');
+        const titleDisplay = document.getElementById('step-title');
+        const descDisplay = document.getElementById('step-desc');
+        const imageDisplay = document.getElementById('step-image');
+        const progressBar = document.getElementById('progress');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+
+        // Simple beep sound using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(frequency = 440, duration = 0.2) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function updateUI() {
+            const step = routine[currentStep];
+            titleDisplay.textContent = step.title;
+            descDisplay.textContent = step.desc;
+            
+            if (step.img) {
+                imageDisplay.style.backgroundImage = `url('${step.img}')`;
+                imageDisplay.textContent = "";
+            } else {
+                imageDisplay.style.backgroundImage = "none";
+                imageDisplay.textContent = "No image for this step";
+            }
+
+            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const secs = (timeLeft % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${mins}:${secs}`;
+
+            // Calculate progress bar for the current step
+            if (step.duration > 0) {
+                const percent = ((step.duration - timeLeft) / step.duration) * 100;
+                progressBar.style.width = `${percent}%`;
+            } else {
+                progressBar.style.width = "100%";
+            }
+        }
+
+        function nextStep() {
+            currentStep++;
+            if (currentStep < routine.length) {
+                timeLeft = routine[currentStep].duration;
+                playBeep(600, 0.4); // Higher beep for step change
+                updateUI();
+                if (routine[currentStep].duration === 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    playBeep(800, 0.6); // Finish chime
+                }
+            }
+        }
+
+        function timerTick() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                if (timeLeft <= 3 && timeLeft > 0) playBeep(440, 0.1); // Countdown beeps
+                updateUI();
+            } else {
+                nextStep();
+            }
+        }
+
+        function startRoutine() {
+            if (!isRunning) {
+                if (currentStep === 0 && timeLeft === 0) {
+                    timeLeft = routine[0].duration;
+                } else if (currentStep >= routine.length - 1) {
+                    resetRoutine();
+                    timeLeft = routine[0].duration;
+                }
+                
+                // Initialize Audio Context on user gesture
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                timerInterval = setInterval(timerTick, 1000);
+                isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                updateUI();
+            }
+        }
+
+        function pauseRoutine() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                startBtn.textContent = "Resume";
+            }
+        }
+
+        function resetRoutine() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            currentStep = 0;
+            timeLeft = 0;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            startBtn.textContent = "Start";
+            timerDisplay.textContent = "00:00";
+            progressBar.style.width = "0%";
+            updateUI();
+        }
+
+        // Initialize UI
+        updateUI();
+    </script>
+</body>
+</html>
