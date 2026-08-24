@@ -55,24 +55,40 @@
             min-height: 60px;
             margin-bottom: 20px;
         }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
         .controls button {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            padding: 12px 20px;
+            font-size: 1.1rem;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s;
-            margin: 5px;
             font-weight: 600;
+            flex: 1;
+            min-width: 100px;
         }
-        .controls button:hover {
+        .controls button:hover:not(:disabled) {
             background-color: #1d4ed8;
         }
         .controls button:disabled {
-            background-color: #94a3b8;
+            background-color: #cbd5e1;
             cursor: not-allowed;
+            color: #64748b;
+        }
+        /* Style for the secondary navigation buttons */
+        .nav-btn {
+            background-color: #475569 !important;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background-color: #334155 !important;
         }
         .progress-bar {
             width: 100%;
@@ -127,6 +143,11 @@
             <button id="pause-btn" onclick="pauseRoutine()" disabled>Pause</button>
             <button id="reset-btn" onclick="resetRoutine()">Reset</button>
         </div>
+        
+        <div class="controls">
+            <button id="prev-btn" class="nav-btn" onclick="prevStepManual()" disabled>⏮ Previous</button>
+            <button id="next-btn" class="nav-btn" onclick="nextStepManual()">Next ⏭</button>
+        </div>
     </div>
 
     <script>
@@ -157,6 +178,8 @@
         const progressBar = document.getElementById('progress');
         const startBtn = document.getElementById('start-btn');
         const pauseBtn = document.getElementById('pause-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
 
         // Simple beep sound using Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -190,13 +213,17 @@
             const secs = (timeLeft % 60).toString().padStart(2, '0');
             timerDisplay.textContent = `${mins}:${secs}`;
 
-            // Calculate progress bar for the current step
+            // Calculate progress bar
             if (step.duration > 0) {
                 const percent = ((step.duration - timeLeft) / step.duration) * 100;
                 progressBar.style.width = `${percent}%`;
             } else {
                 progressBar.style.width = "100%";
             }
+
+            // Update Previous/Next button states
+            prevBtn.disabled = currentStep === 0;
+            nextBtn.disabled = currentStep === routine.length - 1;
         }
 
         function nextStep() {
@@ -211,6 +238,30 @@
                     startBtn.disabled = false;
                     pauseBtn.disabled = true;
                     playBeep(800, 0.6); // Finish chime
+                }
+            }
+        }
+
+        function prevStepManual() {
+            if (currentStep > 0) {
+                currentStep--;
+                timeLeft = routine[currentStep].duration;
+                updateUI();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }
+        }
+
+        function nextStepManual() {
+            if (currentStep < routine.length - 1) {
+                currentStep++;
+                timeLeft = routine[currentStep].duration;
+                updateUI();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                if (routine[currentStep].duration === 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
                 }
             }
         }
@@ -234,7 +285,6 @@
                     timeLeft = routine[0].duration;
                 }
                 
-                // Initialize Audio Context on user gesture
                 if (audioCtx.state === 'suspended') audioCtx.resume();
 
                 timerInterval = setInterval(timerTick, 1000);
